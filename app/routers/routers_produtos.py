@@ -1,7 +1,7 @@
 from typing import List, Dict
 from fastapi import APIRouter, HTTPException
-from models.models_produtos import Produto, CriarProduto, HistoricoCompras, Preferencias
-from routers.routers_usuarios import usuarios
+from app.models.models_produtos import Produto, CriarProduto, HistoricoCompras, Preferencias
+from app.routers.routers_usuarios import usuarios
 
 router = APIRouter()
 
@@ -13,7 +13,7 @@ historico_de_compras: Dict[int, List[int]] = {}
 
 @router.post("/produtos/", response_model=Produto)
 def criar_produto(produto: CriarProduto) -> Produto:
-    
+
     """
     Cria um novo produto.
     Args:
@@ -70,7 +70,7 @@ def recomendar_produtos(usuario_id: int, preferencias: Preferencias) -> List[Pro
     """
     Recomenda produtos com base no histórico de compras e preferências do usuário.
     Args:
-        usuario_id (int): O ID do usuário para o qual as recomendações serão feitas.
+        usuario_id (int): O ID do usuário pa0ra o qual as recomendações serão feitas.
         preferencias (Preferencias): O objeto contendo as preferências do usuário, como categorias e tags.
     Raises:
         HTTPException: Se o histórico de compras não for encontrado para o usuário.
@@ -94,13 +94,16 @@ def recomendar_produtos(usuario_id: int, preferencias: Preferencias) -> List[Pro
     ]
 
     # Filtrar as recomendações com base nas preferências
-    produtos_recomendados = [
-        p for p in produtos_recomendados if p.categoria in preferencias.categorias
+    produtos_recomendados_categorias = [
+        produto for produto in produtos_recomendados if produto.categoria in preferencias.categorias
     ]  # Preferencias de categorias
-    produtos_recomendados = [
-        p
-        for p in produtos_recomendados
-        if any(tag in preferencias.tags for tag in p.tags)
-    ]  # Preferencias de tags
+    
+    produtos_recomendados_filtrados = []
+    
+    for produto in produtos_recomendados_categorias:
+        for tag in produto.tags:
+            if tag in preferencias.tags:
+                produtos_recomendados_filtrados.append(produto)
+                break
 
-    return produtos_recomendados
+    return produtos_recomendados_filtrados
